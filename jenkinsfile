@@ -1,6 +1,6 @@
 def buildAndPushTag(Map args) {
     def defaults = [
-        registryUrl: '',
+        registryUrl: 'https://github.com/Honoga-Sensei/formazione_sou_k8s/tree/main',
         dockerfileDir: "./",
         dockerfileName: "Dockerfile",
         buildArgs: "",
