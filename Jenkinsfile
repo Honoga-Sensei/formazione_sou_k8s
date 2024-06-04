@@ -1,3 +1,46 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        DOCKERHUB_REPO = 'honogasensei/formazione_sou'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def buildTag = ""
+                    if (env.GIT_BRANCH == 'main') {
+                        buildTag = "latest"
+                    } else if (env.GIT_BRANCH == 'develop') {
+                        buildTag = "develop-${env.GIT_COMMIT}"
+                    } else if (env.GIT_TAG) {
+                        buildTag = env.GIT_TAG
+                    } else {
+                        buildTag = "latest"
+                    }
+
+                    buildAndPushTag(
+                        registryUrl: "https://index.docker.io/v1/",
+                        image: "${DOCKERHUB_REPO}",
+                        buildTag: buildTag,
+                        dockerfileDir: ".",
+                        dockerfileName: "Dockerfile",
+                        buildArgs: ""
+                    )
+                }
+            }
+        }
+    }
+}
+
+
 def buildAndPushTag(Map args) {
     def defaults = [
         registryUrl: 'https://github.com/Honoga-Sensei/formazione_sou_k8s/tree/main',
