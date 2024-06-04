@@ -27,7 +27,7 @@ pipeline {
                     }
 
                     buildAndPushTag(
-                        registryUrl: "https://index.docker.io/v1/",
+                        registryUrl: "https://hub.docker.com/repository/docker/honogasensei/formazione_sou/general",
                         image: "${DOCKERHUB_REPO}",
                         buildTag: buildTag,
                         dockerfileDir: ".",
@@ -43,7 +43,7 @@ pipeline {
 
 def buildAndPushTag(Map args) {
     def defaults = [
-        registryUrl: 'https://github.com/Honoga-Sensei/formazione_sou_k8s/tree/main',
+        registryUrl: 'https://hub.docker.com/repository/docker/honogasensei/formazione_sou/general',
         dockerfileDir: "./",
         dockerfileName: "Dockerfile",
         buildArgs: "",
