@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('DockerHub')
-        DOCKER_REGISTRY = 'mydockerhubusername/flask-app-example'
+        DOCKER_REGISTRY = 'honogasensei/formazione_sou'
     }
 
     stages {
