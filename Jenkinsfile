@@ -2,37 +2,51 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('DockerHub')
-        DOCKERHUB_REPO = 'ericawanja/todoapp'
+        DOCKERHUB_CREDENTIALS = credentials('DockerHub')
+        DOCKER_REGISTRY = 'honogasensei/formazione_sou'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git 'https://github.com/Honoga-Sensei/formazione_sou_k8s'
             }
         }
-        stage('Login') {
+
+        stage('Build') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'DockerHub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
+                script {
+                    def tag = ''
+                    if (env.BRANCH_NAME == 'master') {
+                        tag = 'latest'
+                    } else if (env.BRANCH_NAME == 'develop') {
+                        tag = "develop-${env.GIT_COMMIT[0..6]}"
+                    } else if (env.GIT_TAG_NAME) {
+                        tag = env.GIT_TAG_NAME
+                    }
+
+                    docker.build("${DOCKER_REGISTRY}:${tag}")
                 }
             }
         }
-        stage('Build') {
-            steps {
-                sh "docker build -t ${DOCKERHUB_REPO}:latest ."
-            }
-        }
+
         stage('Push') {
             steps {
-                sh "docker push ${DOCKERHUB_REPO}:latest"
+                script {
+                    docker.withRegistry('', 'DockerHub') {
+                        def tag = ''
+                        if (env.BRANCH_NAME == 'master') {
+                            tag = 'latest'
+                        } else if (env.BRANCH_NAME == 'develop') {
+                            tag = "develop-${env.GIT_COMMIT[0..6]}"
+                        } else if (env.GIT_TAG_NAME) {
+                            tag = env.GIT_TAG_NAME
+                        }
+
+                        docker.image("${DOCKER_REGISTRY}:${tag}").push()
+                    }
+                }
             }
-        }
-    }
-    post {
-        always {
-            sh 'docker logout'
         }
     }
 }
