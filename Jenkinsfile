@@ -1,10 +1,9 @@
-pipeline {
+ipeline {
     agent any
 
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('DockerHub')
-        DOCKER_REGISTRY_URL = 'https://hub.docker.com/repository/docker/honogasensei/formazione_sou'
-        DOCKERHUB_REPO = 'honogasensei/formazione_sou'
+        DOCKERHUB_REPO = 'ericawanja/todoapp'
     }
 
     stages {
@@ -13,41 +12,27 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build Docker Image') {
+        stage('Login') {
             steps {
-                script {
-                    def buildTag = env.GIT_TAG ?: (env.BRANCH_NAME == 'main' ? "latest" : (env.BRANCH_NAME == 'develop' ? "develop-${env.GIT_COMMIT}" : "latest"))
-
-                    buildAndPushTag(
-                        registryUrl: "${DOCKER_REGISTRY_URL}",
-                        image: "${DOCKERHUB_REPO}",
-                        buildTag: buildTag,
-                        dockerfileDir: ".",
-                        dockerfileName: "Dockerfile",
-                        buildArgs: ""
-                    )
+                withCredentials([usernamePassword(credentialsId: 'DockerHub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
                 }
             }
         }
-    }
-}
-
-def buildAndPushTag(Map args) {
-    def defaults = [
-        registryUrl: "${DOCKER_REGISTRY_URL}",
-        dockerfileDir: "./",
-        dockerfileName: "Dockerfile",
-        buildArgs: "",
-        pushLatest: true
-    ]
-    args = defaults + args
-    docker.withRegistry(args.registryUrl, DOCKER_HUB_CREDENTIALS) {
-        def image = docker.build(args.image, "-f ${args.dockerfileDir}/${args.dockerfileName} ${args.buildArgs} ${args.dockerfileDir}")
-        image.push(args.buildTag)
-        if(args.pushLatest) {
-            image.push("latest")
-            sh "docker rmi --force ${args.image}:latest"
+        stage('Build') {
+            steps {
+                sh "docker build -t ${DOCKERHUB_REPO}:latest ."
+            }
         }
-        sh "docker rmi --force ${args.image}:${args.buildTag}"
+        stage('Push') {
+            steps {
+                sh "docker push ${DOCKERHUB_REPO}:latest"
+            }
+        }
+    }
+    post {
+        always {
+            sh 'docker logout'
+        }
     }
 }
