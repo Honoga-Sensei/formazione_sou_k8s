@@ -1,52 +1,24 @@
 pipeline {
     agent any
-
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('DockerHub')
-        DOCKER_REGISTRY = 'honogasensei/formazione_sou'
+        IMG_NAME = 'hello_world'
+        DOCKER_REPO = 'honogasensei/formazione_sou'
     }
-
     stages {
-        stage('Checkout') {
+        stage('build') {
             steps {
                 script {
-                    def branch = env.BRANCH_NAME ?: 'main'
-                    git branch: branch, url: 'https://github.com/Honoga-Sensei/formazione_sou_k8s.git'
+                        sh 'docker build -t ${IMG_NAME} .'
+                        sh 'docker tag ${IMG_NAME} ${DOCKER_REPO}:${IMG_NAME}'
                 }
             }
         }
-
-        stage('Build') {
+        stage('push') {
             steps {
-                script {
-                    def tag = ''
-                    if (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'main') {
-                        tag = 'latest'
-                    } else if (env.BRANCH_NAME == 'develop') {
-                        tag = "develop-${env.GIT_COMMIT[0..6]}"
-                    } else if (env.GIT_TAG_NAME) {
-                        tag = env.GIT_TAG_NAME
-                    }
-
-                    docker.build("${DOCKER_REGISTRY}:${tag}")
-                }
-            }
-        }
-
-        stage('Push') {
-            steps {
-                script {
-                    docker.withRegistry('', 'DockerHub') {
-                        def tag = ''
-                        if (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'main') {
-                            tag = 'latest'
-                        } else if (env.BRANCH_NAME == 'develop') {
-                            tag = "develop-${env.GIT_COMMIT[0..6]}"
-                        } else if (env.GIT_TAG_NAME) {
-                            tag = env.GIT_TAG_NAME
-                        }
-
-                        docker.image("${DOCKER_REGISTRY}:${tag}").push()
+                withCredentials([usernamePassword(credentialsId: 'DockerHub-LG', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
+                    script {
+                        sh 'echo ${PSWD} | docker login -u ${LOGIN} --password-stdin'
+                        sh 'docker push ${DOCKER_REPO}:${IMG_NAME}'
                     }
                 }
             }
