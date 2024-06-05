@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('DockerHub')
         DOCKER_REGISTRY = 'mydockerhubusername/flask-app-example'
     }
 
@@ -36,7 +36,7 @@ pipeline {
         stage('Push') {
             steps {
                 script {
-                    docker.withRegistry('', 'dockerhub-credentials') {
+                    docker.withRegistry('', 'DockerHub') {
                         def tag = ''
                         if (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'main') {
                             tag = 'latest'
