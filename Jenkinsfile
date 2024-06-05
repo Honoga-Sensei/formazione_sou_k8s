@@ -34,7 +34,7 @@ pipeline {
 
 def buildAndPushTag(Map args) {
     def defaults = [
-        registryUrl: :"${DOCKER_REGISTRY_URL}",
+        registryUrl: "${DOCKER_REGISTRY_URL}",
         dockerfileDir: "./",
         dockerfileName: "Dockerfile",
         buildArgs: "",
