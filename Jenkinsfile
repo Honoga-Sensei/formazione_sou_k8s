@@ -1,27 +1,40 @@
 pipeline {
-    agent any
-    environment {
-        IMG_NAME = 'hello_world'
-        DOCKER_REPO = 'honogasensei/formazione_sou'
+  environment {
+    imagename = "honogasensei/formazione_sou"
+    registryCredential = 'DockerHub'
+    dockerImage = ''
+  }
+  agent any
+  stages {
+    stage('Cloning Git') {
+      steps {
+        git([url: 'https://github.com/Honoga-Sensei/formazione_sou_k8s', branch: 'main', credentialsId: 'GitHub'])
+ 
+      }
     }
-    stages {
-        stage('build') {
-            steps {
-                script {
-                        sh 'docker build -t ${IMG_NAME} .'
-                        sh 'docker tag ${IMG_NAME} ${DOCKER_REPO}:${IMG_NAME}'
-                }
-            }
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build imagename
         }
-        stage('push') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'DockerHub-LG', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
-                    script {
-                        sh 'echo ${PSWD} | docker login -u ${LOGIN} --password-stdin'
-                        sh 'docker push ${DOCKER_REPO}:${IMG_NAME}'
-                    }
-                }
-            }
-        }
+      }
     }
+    stage('Deploy Image') {
+      steps{
+        script {
+          docker.withRegistry( '', registryCredential ) {
+            dockerImage.push("$BUILD_NUMBER")
+             dockerImage.push('latest')
+          }
+        }
+      }
+    }
+    stage('Remove Unused docker image') {
+      steps{
+        sh "docker rmi $imagename:$BUILD_NUMBER"
+         sh "docker rmi $imagename:latest"
+ 
+      }
+    }
+  }
 }
