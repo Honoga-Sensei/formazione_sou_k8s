@@ -7,7 +7,7 @@ pipeline {
   agent any
   stages {
     stage('print user'){
-      step {
+      steps {
         sh "whoami"
       }
     }
