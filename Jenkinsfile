@@ -1,4 +1,3 @@
-//
 pipeline {
     environment {
         imagename = "honogasensei/formazione_sou"
