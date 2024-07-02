@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . /app
 
 # Install the necessary packages
-RUN pip install --no-cache-dir flask==1.1.2 werkzeug==1.0.1
+RUN pip install --no-cache-dir 
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
